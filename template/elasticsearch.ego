@@ -1,0 +1,32 @@
+<%! func ElasticsearchExtract(w io.Writer) error %>
+<html>
+<head>
+  <title>Elasticsearch extractor</title>
+</head>
+<body>
+  <pre id="result"></pre>
+  <script>
+    function poll() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", document.location.origin);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) {
+          return;
+        }
+        if (xhr.status === 200) {
+          var response = xhr.response;
+          var version = JSON.parse(response).version.number;
+          window.top.postMessage("You're running ElasticSearch version " + version, '*');
+        } else if (xhr.status === 404) {
+          window.top.postMessage(".", '*');
+          setTimeout(poll, 5000);
+        } else {
+          window.top.postMessage("You don't seem to be running ElasticSearch", '*');
+        }
+      };
+      xhr.send();
+    }
+    setTimeout(poll, 5000);
+  </script>
+</body>
+</html>

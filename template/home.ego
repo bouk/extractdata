@@ -1,0 +1,30 @@
+<%! func Home(w io.Writer, urls []string) error %>
+
+<html>
+<head>
+  <title>ExtractData</title>
+  <style>
+    * {box-sizing: border-box}
+    #container {max-width:100%; width: 800px;margin: 0 auto;padding: 10px;}
+  </style>
+</head>
+<body>
+  <% for _, url := range urls { %>
+    <iframe style="display:none" src="<%= url %>"></iframe>
+  <% } %>
+  <div id="container">
+    <h1>Extract Data</h1>
+    <p>This page will attempt to extract information from Redis, Memcached and ElasticSearch running on localhost using a technique called <a href="https://en.wikipedia.org/wiki/DNS_rebinding" target="_blank">DNS rebinding</a>. This demo takes about 1 minute, and it should display a version message for every accessible service. If the service cannot be reached, it will instead display a message stating that the service wasn't found. You can read more about this on my <a href="http://bouk.co/blog/hacking-developers/" target="_blank">blog</a></p>
+    <pre id="results">Please wait</pre>
+    <script>
+      window.addEventListener('message', function(e) {
+        if (e.data !== '.') {
+          document.querySelector('#results').innerHTML += "\n";
+        }
+        document.querySelector('#results').innerHTML += e.data;
+      });
+    </script>
+    <p><small>Made by <a href="http://bouk.co" target="_blank">Bouke</a></small></p>
+  </div>
+</body>
+</html>
