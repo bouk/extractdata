@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -77,28 +78,50 @@ func main() {
 			ip = "127.0.0.1"
 		}
 
-		go svc.ChangeResourceRecordSets(
-			&route53.ChangeResourceRecordSetsInput{
-				HostedZoneId: aws.String(hostedZoneId),
-				ChangeBatch: &route53.ChangeBatch{
-					Changes: []*route53.Change{
-						{
-							Action: aws.String("CREATE"),
-							ResourceRecordSet: &route53.ResourceRecordSet{
-								Name: aws.String(host),
-								Type: aws.String("A"),
-								ResourceRecords: []*route53.ResourceRecord{
-									{
-										Value: aws.String(ip),
+		go func() {
+			_, err := svc.ChangeResourceRecordSets(
+				&route53.ChangeResourceRecordSetsInput{
+					HostedZoneId: aws.String(hostedZoneId),
+					ChangeBatch: &route53.ChangeBatch{
+						Changes: []*route53.Change{
+							{
+								Action: aws.String("CREATE"),
+								ResourceRecordSet: &route53.ResourceRecordSet{
+									Name: aws.String(host),
+									Type: aws.String("A"),
+									ResourceRecords: []*route53.ResourceRecord{
+										{
+											Value: aws.String(ip),
+										},
 									},
+									TTL: aws.Int64(60),
 								},
-								TTL: aws.Int64(60),
 							},
 						},
 					},
 				},
-			},
-		)
+			)
+			if err != nil {
+				time.Sleep(time.Hour)
+				svc.ChangeResourceRecordSets(
+					&route53.ChangeResourceRecordSetsInput{
+						HostedZoneId: aws.String(hostedZoneId),
+						ChangeBatch: &route53.ChangeBatch{
+							Changes: []*route53.Change{
+								{
+									Action: aws.String("DELETE"),
+									ResourceRecordSet: &route53.ResourceRecordSet{
+										Name: aws.String(host),
+										Type: aws.String("A"),
+										TTL:  aws.Int64(60),
+									},
+								},
+							},
+						},
+					},
+				)
+			}
+		}()
 
 		switch port {
 		case "6379", "16379":
