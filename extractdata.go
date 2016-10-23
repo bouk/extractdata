@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bouk/extractdata/template"
 	"github.com/julienschmidt/httprouter"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -101,9 +102,9 @@ func main() {
 					},
 				},
 			)
-			if err != nil {
+			if err == nil {
 				time.Sleep(time.Hour)
-				svc.ChangeResourceRecordSets(
+				_, err = svc.ChangeResourceRecordSets(
 					&route53.ChangeResourceRecordSetsInput{
 						HostedZoneId: aws.String(hostedZoneId),
 						ChangeBatch: &route53.ChangeBatch{
@@ -113,13 +114,21 @@ func main() {
 									ResourceRecordSet: &route53.ResourceRecordSet{
 										Name: aws.String(host),
 										Type: aws.String("A"),
-										TTL:  aws.Int64(60),
+										ResourceRecords: []*route53.ResourceRecord{
+											{
+												Value: aws.String(ip),
+											},
+										},
+										TTL: aws.Int64(60),
 									},
 								},
 							},
 						},
 					},
 				)
+				if err != nil {
+					log.Print(err)
+				}
 			}
 		}()
 
